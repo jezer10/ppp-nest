@@ -10,18 +10,219 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+model Cycle {
+  cycleId   Int       @id @default(autoincrement())
+  name      String
+  status    String?
+  createdAt DateTime? @db.Date
+  Student   Student[]
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+model School {
+  schoolId  Int       @id @default(autoincrement())
+  name      String
+  status    String?
+  createdAt DateTime? @db.Date
+  Student   Student[]
+}
+
+model Person {
+  personId   Int       @id @default(autoincrement())
+  name       String
+  surname    String
+  dni        String
+  phone      String?
+  email      String?
+  address    String?
+  department String?
+  province   String?
+  district   String?
+  status     String?   @default(dbgenerated("1"))
+  createdAt  DateTime? @db.Date
+  Teacher    Teacher[]
+  Student    Student[]
+  User       User[]
+}
+
+model Teacher {
+  teacherId  Int          @id @default(autoincrement())
+  code       Int
+  personId   Int
+  Person     Person       @relation(fields: [personId], references: [personId])
+  Supervisor Supervisor[]
+}
+
+model Student {
+  studentId Int       @id @default(autoincrement())
+  code      String
+  tutorial  Boolean?  @default(false)
+  state     String
+  personId  Int
+  Person    Person    @relation(fields: [personId], references: [personId])
+  cycleId   Int?
+  Cycle     Cycle?    @relation(fields: [cycleId], references: [cycleId], onDelete: NoAction, onUpdate: NoAction)
+  schoolId  Int?
+  School    School?   @relation(fields: [schoolId], references: [schoolId], onDelete: NoAction, onUpdate: NoAction)
+  Process   Process[]
+}
+
+model User {
+  userId      Int        @id @default(autoincrement())
+  username    String
+  password    String
+  photo       String?
+  state       String?    @default(dbgenerated("1"))
+  createdAt   DateTime?  @db.Date
+  personId    Int
+  Person      Person     @relation(fields: [personId], references: [personId])
+  Rol_usuario UserRole[]
+}
+
+model UserRole {
+  userRoleId Int       @id @default(autoincrement())
+  state      String?   @default(dbgenerated("1"))
+  createdAt  DateTime? @db.Date
+  userId     Int
+  User       User      @relation(fields: [userId], references: [userId])
+  roleId     Int
+  Role       Role      @relation(fields: [roleId], references: [roleId])
+}
+
+model Role {
+  roleId      Int          @id @default(autoincrement())
+  name        String?
+  description String?
+  state       String?      @default(dbgenerated("1"))
+  createdAt   DateTime?    @db.Date
+  UserRole    UserRole[]
+  RoleAccess  RoleAccess[]
+}
+
+model RoleAccess {
+  roleAccessId Int       @id @default(autoincrement())
+  state        String?   @default(dbgenerated("1"))
+  createdAt    DateTime? @db.Date
+  roleId       Int
+  Role         Role      @relation(fields: [roleId], references: [roleId])
+  accessId     Int
+  Access       Access    @relation(fields: [accessId], references: [accessId])
+}
+
+model Access {
+  accessId   Int          @id @default(autoincrement())
+  name       String
+  url        String?
+  icon       String
+  state      String
+  createdAt  DateTime?    @db.Date
+  RoleAccess RoleAccess[]
+}
+
+model Company {
+  companyId Int       @id @default(autoincrement())
+  name      String
+  email     String
+  address   String
+  ruc       String
+  contact   String
+  type      String
+  Process   Process[]
+}
+
+model Dimension {
+  dimensionId         Int                   @id @default(autoincrement())
+  name                String
+  DimensionInstrument DimensionInstrument[]
+}
+
+model DimensionInstrument {
+  dimensionInstrumentId Int        @id @default(autoincrement())
+  dimensionId           Int
+  Dimension             Dimension  @relation(fields: [dimensionId], references: [dimensionId], onDelete: NoAction, onUpdate: NoAction)
+  instrumentId          Int
+  Instrumento           Instrument @relation(fields: [instrumentId], references: [instrumentId], onDelete: NoAction, onUpdate: NoAction)
+  Item                  Item[]
+}
+
+model Instrument {
+  instrumentId        Int                   @id @default(autoincrement())
+  name                String
+  Assessment          Assessment[]
+  DimensionInstrument DimensionInstrument[]
+}
+
+model Item {
+  itemId                Int                 @id @default(autoincrement())
+  name                  String
+  dimensionInstrumentId Int
+  DimensionInstrument   DimensionInstrument @relation(fields: [dimensionInstrumentId], references: [dimensionInstrumentId], onDelete: NoAction, onUpdate: NoAction)
+  Level                 Level[]
+}
+
+model Assessment {
+  assessmentId Int        @id @default(autoincrement())
+  startDate    DateTime
+  endDate      DateTime
+  isVirtual    Boolean
+  type         String
+  instrumentId Int
+  Instrumento  Instrument @relation(fields: [instrumentId], references: [instrumentId])
+  processId    Int
+  Proceso      Process    @relation(fields: [processId], references: [processId])
+  Nivel        Level[]
+}
+
+model Level {
+  levelId      Int        @id @default(autoincrement())
+  name         String
+  itemId       Int
+  Item         Item       @relation(fields: [itemId], references: [itemId])
+  assessmentId Int
+  Assessment   Assessment @relation(fields: [assessmentId], references: [assessmentId])
+}
+
+model Supervisor {
+  supervisorId Int       @id @default(autoincrement())
+  teacherId    Int
+  Teacher      Teacher   @relation(fields: [teacherId], references: [teacherId])
+  Process      Process[]
+}
+
+model Process {
+  processId    Int          @id @default(autoincrement())
+  type         String
+  state        String
+  companyId    Int
+  Company      Company      @relation(fields: [companyId], references: [companyId])
+  studentId    Int
+  Student      Student      @relation(fields: [studentId], references: [studentId])
+  supervisorId Int
+  Supervisor   Supervisor   @relation(fields: [supervisorId], references: [supervisorId])
+  Stage        Stage[]
+  Assessment   Assessment[]
+}
+
+model StageType {
+  stageTypeId Int     @id @default(autoincrement())
+  name        String
+  Stage       Stage[]
+}
+
+model Stage {
+  stageId     Int       @id @default(autoincrement())
+  filename    String
+  path        String
+  state       String
+  createdAt   String
+  processId   Int
+  Process     Process   @relation(fields: [processId], references: [processId], onDelete: NoAction, onUpdate: NoAction)
+  stageTypeId Int
+  StageType   StageType @relation(fields: [stageTypeId], references: [stageTypeId], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Document {
+  documentId Int      @id @default(autoincrement())
+  name       String?
+  path       String?
+  enabled    Boolean?
 }
